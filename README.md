@@ -25,3 +25,7 @@ Ensure the external service is running in Docker as described in the task.
 ```bash
 uvicorn src.main:app --reload
 ```
+### Run tests
+```bash
+pytest -vv tests
+```

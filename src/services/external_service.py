@@ -12,7 +12,9 @@ class ExternalService:
     async def get_organizations(
         self,
         size: int = settings.DEFAULT_PAGE_SIZE,
-        offset: int = 0
+        offset: int = 0,
+        min_employees: int = 0,
+        country: str = None
     ) -> OrganizationResponse:
         """
         Fetch organizations from external service with pagination.
@@ -27,7 +29,9 @@ class ExternalService:
         # Build query parameters
         params = {
             "size": size,
-            "offset": offset
+            "offset": offset,
+            "min_employees": min_employees,
+            "country": country
         }
 
         try:
@@ -41,8 +45,7 @@ class ExternalService:
                 data = response.json()
                 return OrganizationResponse(
                     organizations=[OrganizationBase(**org) for org in data["data"]],
-                    total=data["total_records"],
-                    average_employees=sum(org["employee_count"] for org in data["data"]) / len(data["data"])
+                    average_employees=sum(org["employee_count"] for org in data["data"]) / len(data["data"]) if len(data["data"]) else 0
                 )
 
         except httpx.HTTPError as e:

@@ -10,5 +10,4 @@ class OrganizationBase(BaseModel):
 
 class OrganizationResponse(BaseModel):
     organizations: List[OrganizationBase]
-    total: int
     average_employees: Optional[float] = None
