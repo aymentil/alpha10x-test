@@ -25,7 +25,6 @@ async def test_external_service_get_organizations():
     mock_result = OrganizationResponse(
         organizations=[OrganizationBase(**org)
                        for org in mock_response["data"]],
-        total=mock_response["total_records"],
         average_employees=sum(org["employee_count"]
                               for org in mock_response["data"]) / len(mock_response["data"])
     )
@@ -63,3 +62,94 @@ async def test_external_service_error_handling():
         assert exc_info.value.status_code == 500
         assert "Error communicating with external service" in str(
             exc_info.value.detail)
+
+
+@pytest.mark.asyncio
+async def test_external_service_get_organizations_with_filters():
+    """Test ExternalService.get_organizations method with filters"""
+    service = ExternalService()
+    mock_response = {
+        "data": [
+            {
+                "name": "Test Corp 2",
+                "country": "France",
+                "employee_count": 200,
+                "industry": "Technology",
+                "founded": 2020,
+            }
+        ],
+        "total_records": 2
+    }
+
+    mock_result = OrganizationResponse(
+        organizations=[OrganizationBase(**org)
+                          for org in mock_response["data"] if org["employee_count"] >= 150 and org["country"] == "France"],
+        average_employees=sum(org["employee_count"]
+                                for org in mock_response["data"]) / len(mock_response["data"]) if len(mock_response["data"]) else 0
+    )
+
+
+    with patch('httpx.AsyncClient.get') as mock_get:
+        # Configure the mock
+        mock_get.return_value = MagicMock(
+            status_code=200,
+            json=lambda: {
+                "data": [org for org in mock_response["data"] if org["employee_count"] >= 150 and org["country"] == "France"],
+                "total_records": 1
+            },
+            raise_for_status=lambda: None
+        )
+
+        # Call the service method with filters
+        result = await service.get_organizations(
+            size=10, offset=0, min_employees=150, country="France")
+
+        # Verify the result
+        print(f'result: {result}')
+        print(f'mock_result: {mock_result}')
+        assert result == mock_result
+
+@pytest.mark.asyncio
+async def test_external_service_get_organizations_with_filters_no_result():
+    """Test ExternalService.get_organizations method with filters"""
+    service = ExternalService()
+    mock_response = {
+        "data": [
+            {
+                "name": "Test Corp 2",
+                "country": "France",
+                "employee_count": 200,
+                "industry": "Technology",
+                "founded": 2020,
+            }
+        ],
+        "total_records": 2
+    }
+
+    mock_result = OrganizationResponse(
+        organizations=[OrganizationBase(**org)
+                          for org in mock_response["data"] if org["employee_count"] >= 300 and org["country"] == "Canada"],
+        average_employees=sum(org["employee_count"]
+                                for org in mock_response["data"] if org["employee_count"] >= 300 and org["country"] == "Canada") / len(mock_response["data"]) if len(mock_response["data"]) else 0
+    )
+
+
+    with patch('httpx.AsyncClient.get') as mock_get:
+        # Configure the mock
+        mock_get.return_value = MagicMock(
+            status_code=200,
+            json=lambda: {
+                "data": [org for org in mock_response["data"] if org["employee_count"] >= 150 and org["country"] == "Canada"],
+                "total_records": 1
+            },
+            raise_for_status=lambda: None
+        )
+
+        # Call the service method with filters
+        result = await service.get_organizations(
+            size=10, offset=0, min_employees=300, country="Canada")
+
+        # Verify the result
+        print(f'result: {result}')
+        print(f'mock_result: {mock_result}')
+        assert result == mock_result
