@@ -1,0 +1,24 @@
+[tool.poetry]
+package-mode = false
+name = "alpha10x-test"
+version = "0.1.0"
+description = ""
+authors = ["Aymen Tilfani <aymen.tilfani@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+requests = "^2.32.3"
+fastapi = {extras = ["standard"], version = "^0.115.5"}
+pydantic = "^2.9.2"
+mypy = "^1.13.0"
+uvicorn = "^0.32.0"
+pydantic-settings = "^2.6.1"
+fastapi-pagination = "^0.12.32"
+pytest = "^8.3.3"
+pytest-asyncio = "^0.24.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
