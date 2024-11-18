@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 
 class OrganizationBase(BaseModel):
+    id: int
     name: str
     country: str
     employee_count: int

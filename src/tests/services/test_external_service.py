@@ -12,6 +12,7 @@ async def test_external_service_get_organizations():
     mock_response = {
         "data": [
             {
+                "id": 1,
                 "name": "Test Corp",
                 "country": "USA",
                 "employee_count": 100,
@@ -71,6 +72,7 @@ async def test_external_service_get_organizations_with_filters():
     mock_response = {
         "data": [
             {
+                "id": 1,
                 "name": "Test Corp 2",
                 "country": "France",
                 "employee_count": 200,
@@ -78,7 +80,7 @@ async def test_external_service_get_organizations_with_filters():
                 "founded": 2020,
             }
         ],
-        "total_records": 2
+        "total_records": 1
     }
 
     mock_result = OrganizationResponse(
@@ -116,6 +118,7 @@ async def test_external_service_get_organizations_sort_by_employee_count():
     mock_response = {
         "data": [
             {
+                "id": 1,
                 "name": "Test Corp 1",
                 "country": "USA",
                 "employee_count": 100,
@@ -123,6 +126,7 @@ async def test_external_service_get_organizations_sort_by_employee_count():
                 "founded": 2020
             },
             {
+                "id": 2,
                 "name": "Test Corp 2",
                 "country": "France",
                 "employee_count": 200,
@@ -162,6 +166,7 @@ async def test_external_service_get_organizations_sort_by_founded():
     mock_response = {
         "data": [
             {
+                "id": 1,
                 "name": "Test Corp 1",
                 "country": "USA",
                 "employee_count": 100,
@@ -169,6 +174,7 @@ async def test_external_service_get_organizations_sort_by_founded():
                 "founded": 2010
             },
             {
+                "id": 2,
                 "name": "Test Corp 2",
                 "country": "France",
                 "employee_count": 200,
