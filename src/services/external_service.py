@@ -3,6 +3,7 @@ import httpx
 from fastapi import HTTPException, status
 from src.core.config import settings
 from src.models.organization import OrganizationBase, OrganizationResponse
+from src.models.transformed_organization import TransformedOrganizationBase, TransformedOrganizationResponse
 
 class ExternalService:
     def __init__(self):
@@ -68,3 +69,54 @@ class ExternalService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error communicating with external service: {str(e)}"
             )
+    
+    async def get_transformed_organizations(
+        self,
+        size: int = settings.DEFAULT_PAGE_SIZE,
+        offset: int = 0,
+        min_employees: int = 0,
+        country: Optional[str] = None,
+        sort_by: Optional[str] = None,
+        sort_order: str = "asc"
+    ) -> TransformedOrganizationResponse:
+        """
+        Fetch organizations from external service, transform the data, and return it.
+        
+        Args:
+            size: Number of items per page
+            offset: Number of items to skip
+            min_employees: Minimum number of employees
+            country: Filter by country
+            sort_by: Sort by field (None, employee_count, founded)
+            sort_order: Sort order (asc, desc)
+            
+        Returns:
+            Dictionary containing list of transformed organizations and total count
+        """
+        # Fetch organizations
+        organization_response = await self.get_organizations(
+            size=size,
+            offset=offset,
+            min_employees=min_employees,
+            country=country,
+            sort_by=sort_by,
+            sort_order=sort_order
+        )
+
+        # Transform the data
+        transformed_organizations = [
+            TransformedOrganizationBase(
+                name=org.name,
+                country=org.country,
+                employee_count=org.employee_count,
+                is_large=org.employee_count >= 1000,
+            )
+            for org in organization_response.organizations
+        ]
+
+        return TransformedOrganizationResponse(
+            organizations=transformed_organizations,
+            average_employees=organization_response.average_employees
+        )
+    
+    
