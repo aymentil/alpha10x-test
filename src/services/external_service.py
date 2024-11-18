@@ -5,6 +5,7 @@ from src.core.config import settings
 from src.models.organization import OrganizationBase, OrganizationResponse
 from src.models.transformed_organization import TransformedOrganizationBase, TransformedOrganizationResponse
 
+
 class ExternalService:
     def __init__(self):
         self.base_url = settings.EXTERNAL_SERVICE_URL
@@ -15,13 +16,14 @@ class ExternalService:
         size: int = settings.DEFAULT_PAGE_SIZE,
         offset: int = 0,
         min_employees: int = 0,
+        industry: Optional[str] = None,
         country: Optional[str] = None,
         sort_by: Optional[str] = None,
         sort_order: str = "asc"
     ) -> OrganizationResponse:
         """
         Fetch organizations from external service with pagination.
-        
+
         Args:
             size: Number of items per page
             offset: Number of items to skip
@@ -29,7 +31,7 @@ class ExternalService:
             country: Filter by country
             sort_by: Sort by field (None, employee_count, founded)
             sort_order: Sort order (asc, desc)
-            
+
         Returns:
             Dictionary containing list of organizations and total count
         """
@@ -45,6 +47,7 @@ class ExternalService:
             "size": size,
             "offset": offset,
             "min_employees": min_employees,
+            "industry": industry,
             "country": country,
             "sort_by": sort_by,
             "sort_order": sort_order
@@ -60,8 +63,10 @@ class ExternalService:
                 response.raise_for_status()
                 data = response.json()
                 return OrganizationResponse(
-                    organizations=[OrganizationBase(**org) for org in data["data"]],
-                    average_employees=sum(org["employee_count"] for org in data["data"]) / len(data["data"]) if len(data["data"]) else 0
+                    organizations=[OrganizationBase(
+                        **org) for org in data["data"]],
+                    average_employees=sum(org["employee_count"] for org in data["data"]) / len(
+                        data["data"]) if len(data["data"]) else 0
                 )
 
         except httpx.HTTPError as e:
@@ -69,7 +74,7 @@ class ExternalService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error communicating with external service: {str(e)}"
             )
-    
+
     async def get_transformed_organizations(
         self,
         size: int = settings.DEFAULT_PAGE_SIZE,
@@ -81,7 +86,7 @@ class ExternalService:
     ) -> TransformedOrganizationResponse:
         """
         Fetch organizations from external service, transform the data, and return it.
-        
+
         Args:
             size: Number of items per page
             offset: Number of items to skip
@@ -89,7 +94,7 @@ class ExternalService:
             country: Filter by country
             sort_by: Sort by field (None, employee_count, founded)
             sort_order: Sort order (asc, desc)
-            
+
         Returns:
             Dictionary containing list of transformed organizations and total count
         """
@@ -118,5 +123,35 @@ class ExternalService:
             organizations=transformed_organizations,
             average_employees=organization_response.average_employees
         )
-    
-    
+
+    async def get_large_tech_companies(
+            self,
+            size: int = settings.DEFAULT_PAGE_SIZE,
+            offset: int = 0,
+    ) -> OrganizationResponse:
+        # Fetch organizations in the 'Technology' industry
+        tech_organizations_response = await self.get_organizations(
+            size=size,
+            offset=offset,
+            industry='Technology',
+        )
+
+        # Fetch organizations with more than 1000 employees
+        large_organizations_response = await self.get_organizations(
+            size=size,
+            offset=offset,
+            min_employees=1000,
+        )
+
+        # Combine both results without duplicates
+        combined_organizations = {
+            org.id: org for org in tech_organizations_response.organizations}
+        for org in large_organizations_response.organizations:
+            combined_organizations[org.id] = org
+        
+        return OrganizationResponse(
+            organizations=list(combined_organizations.values()),
+            average_employees=(tech_organizations_response.average_employees + large_organizations_response.average_employees) / 2
+        )
+
+        
