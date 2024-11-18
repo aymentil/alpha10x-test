@@ -200,3 +200,6 @@ async def test_external_service_get_organizations_sort_by_founded():
 
         # Verify the result
         assert result == mock_result
+
+# Note I did not write tests for the get_transformed_organizations method in ExternalService because it is a simple wrapper around get_organizations method.
+# Same for large_tech_companies
