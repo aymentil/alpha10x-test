@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 import httpx
 from fastapi import HTTPException, status
 from src.core.config import settings
@@ -14,7 +14,9 @@ class ExternalService:
         size: int = settings.DEFAULT_PAGE_SIZE,
         offset: int = 0,
         min_employees: int = 0,
-        country: str = None
+        country: Optional[str] = None,
+        sort_by: Optional[str] = None,
+        sort_order: str = "asc"
     ) -> OrganizationResponse:
         """
         Fetch organizations from external service with pagination.
@@ -22,16 +24,29 @@ class ExternalService:
         Args:
             size: Number of items per page
             offset: Number of items to skip
+            min_employees: Minimum number of employees
+            country: Filter by country
+            sort_by: Sort by field (None, employee_count, founded)
+            sort_order: Sort order (asc, desc)
             
         Returns:
             Dictionary containing list of organizations and total count
         """
+        # Validate sort_by parameter
+        if sort_by not in {None, "employee_count", "founded"}:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid sort_by parameter. Must be one of None, 'employee_count', or 'founded'."
+            )
+
         # Build query parameters
         params = {
             "size": size,
             "offset": offset,
             "min_employees": min_employees,
-            "country": country
+            "country": country,
+            "sort_by": sort_by,
+            "sort_order": sort_order
         }
 
         try:
